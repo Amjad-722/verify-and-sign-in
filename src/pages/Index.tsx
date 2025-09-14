@@ -26,7 +26,7 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/sign-up">
-                <Button size="lg" className="bg-gradient-primary hover:opacity-90 transition-opacity px-8">
+                <Button variant="outline" size="lg" className="px-8 bg-sky-500 hover:translate-y-2 transition-transform">
                   Get Started
                 </Button>
               </Link>
@@ -162,7 +162,7 @@ const Index = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/sign-up">
-              <Button size="lg" className="bg-gradient-primary hover:opacity-90 transition-opacity px-8">
+              <Button size="lg" className="bg-gray-400 hover:opacity-90 transition-opacity px-8">
                 Create Your Account
               </Button>
             </Link>
