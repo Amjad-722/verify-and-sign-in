@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -9,7 +9,7 @@ import { AuthCard } from './AuthCard'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -25,21 +25,44 @@ type SignUpForm = z.infer<typeof signUpSchema>
 export const SignUpForm = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { signUp } = useAuth()
+  const { signUp, completeSignUp } = useAuth()
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  
+  const email = searchParams.get('email') || ''
+  const verified = searchParams.get('verified') === 'true'
+  const token = searchParams.get('token') || ''
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      email: email
+    }
   })
+
+  useEffect(() => {
+    if (email) {
+      setValue('email', email)
+    }
+  }, [email, setValue])
 
   const onSubmit = async (data: SignUpForm) => {
     setIsLoading(true)
     try {
-      await signUp(data.email, data.password)
+      if (verified && token) {
+        // Complete the signup with verified email
+        await completeSignUp(data.email, data.password, token)
+        navigate('/sign-in')
+      } else {
+        // Regular signup flow - send verification email
+        await signUp(data.email, data.password)
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -55,12 +78,25 @@ export const SignUpForm = () => {
     <AuthCard>
       <div className="space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Create Account
-          </h1>
-          <p className="text-muted-foreground">
-            Enter your details to get started
-          </p>
+          {verified ? (
+            <>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
+                Complete Your Account
+              </h1>
+              <p className="text-muted-foreground">
+                Your email has been verified. Set your password to finish.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Create Account
+              </h1>
+              <p className="text-muted-foreground">
+                Enter your details to get started
+              </p>
+            </>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -73,6 +109,7 @@ export const SignUpForm = () => {
                 type="email"
                 placeholder="you@example.com"
                 className="pl-10"
+                disabled={verified}
                 {...register('email')}
               />
             </div>
@@ -130,10 +167,10 @@ export const SignUpForm = () => {
 
           <Button
             type="submit"
-            className="w-full bg-gray-500 hover:opacity-90 transition-opacity"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
             disabled={isLoading}
           >
-            {isLoading ? "Creating account..." : "Create Account"}
+            {isLoading ? (verified ? "Creating account..." : "Sending verification...") : (verified ? "Create Account" : "Send Verification Email")}
           </Button>
         </form>
 

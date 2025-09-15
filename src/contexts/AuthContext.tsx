@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signUp: (email: string, password: string) => Promise<void>
+  completeSignUp: (email: string, password: string, token: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resendVerification: (email: string) => Promise<void>
@@ -52,6 +53,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signUp = async (email: string, password: string) => {
+    // Generate a temporary token for verification
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    
+    // Store the signup data temporarily (in real app, you'd store this securely)
+    localStorage.setItem('pending_signup', JSON.stringify({ email, password, token }))
+    
+    // Send custom verification email
+    const { error } = await supabase.functions.invoke('send-custom-verification', {
+      body: {
+        email,
+        token,
+        baseUrl: window.location.origin
+      }
+    })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    toast({
+      title: "Check your email",
+      description: "We've sent you a verification email with confirmation buttons.",
+    })
+  }
+
+  const completeSignUp = async (email: string, password: string, token: string) => {
+    // Verify token matches the stored one
+    const pendingSignup = localStorage.getItem('pending_signup')
+    if (!pendingSignup) {
+      throw new Error('No pending signup found')
+    }
+    
+    const { email: storedEmail, token: storedToken } = JSON.parse(pendingSignup)
+    if (email !== storedEmail || token !== storedToken) {
+      throw new Error('Invalid verification token')
+    }
+    
+    // Now create the actual Supabase account
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -64,9 +103,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(error.message)
     }
 
+    // Clean up pending signup
+    localStorage.removeItem('pending_signup')
+
     toast({
-      title: "Check your email",
-      description: "We've sent you a verification link to complete your registration.",
+      title: "Account created successfully!",
+      description: "You can now sign in with your credentials.",
     })
   }
 
@@ -112,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     loading,
     signUp,
+    completeSignUp,
     signIn,
     signOut,
     resendVerification,

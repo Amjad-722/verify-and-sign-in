@@ -8,6 +8,8 @@ import { SignUpForm } from "@/components/auth/SignUpForm";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { EmailVerification } from "@/components/auth/EmailVerification";
 import { AuthCallback } from "@/pages/AuthCallback";
+import { VerifyConfirm } from "@/pages/VerifyConfirm";
+import { VerifyDeny } from "@/pages/VerifyDeny";
 import { Dashboard } from "@/pages/Dashboard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -85,6 +87,8 @@ const App = () => (
               } 
             />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/verify/confirm" element={<VerifyConfirm />} />
+            <Route path="/verify/deny" element={<VerifyDeny />} />
             <Route 
               path="/dashboard" 
               element={
