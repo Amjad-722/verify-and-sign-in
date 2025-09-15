@@ -130,7 +130,7 @@ export const SignUpForm = () => {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+            className="w-full bg-gray-500 hover:opacity-90 transition-opacity"
             disabled={isLoading}
           >
             {isLoading ? "Creating account..." : "Create Account"}
